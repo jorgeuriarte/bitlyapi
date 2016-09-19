@@ -1,0 +1,94 @@
+plugins {
+  id 'groovy'
+  id 'com.github.johnrengelman.shadow' version '1.2.3'
+}
+
+apply plugin: 'groovy'
+apply plugin: 'application'
+mainClassName = "io.vertx.core.Launcher"
+apply plugin: 'com.github.johnrengelman.shadow'
+
+def vertxVersion = '3.3.3'
+def appVersion = '0.0.1'
+
+repositories {
+    jcenter()
+    maven {
+        /** CUIDADO, es un FORK para el api java de bitly **/
+        url "http://stackmagic.github.io/maven-repo/maven2/"
+    }
+}
+
+configurations {
+  ivy
+}
+
+dependencies {
+    ivy group: 'org.apache.ivy', name: 'ivy', version: '2.4.0'
+    compile "io.vertx:vertx-auth-jwt:$vertxVersion"
+    compile "io.vertx:vertx-core:$vertxVersion"
+    compile "io.vertx:vertx-redis-client:$vertxVersion"
+    compile "io.vertx:vertx-lang-groovy:$vertxVersion"
+    compile "io.vertx:vertx-mail-client:$vertxVersion"
+    compile "io.vertx:vertx-unit:$vertxVersion"
+    compile "io.vertx:vertx-web:$vertxVersion"
+    compile "org.apache.ivy:ivy:2.4.0"
+    compile group: 'junit', name: 'junit', version: '4.+'
+}
+
+// In this section you declare the dependencies for your production and test code
+dependencies {
+    ivy group: 'org.apache.ivy', name: 'ivy', version: '2.4.0'
+    // The production code uses the SLF4J logging API at compile time
+    compile 'org.slf4j:slf4j-api:1.7.13'
+    compile "org.apache.ivy:ivy:2.4.0"
+    compile 'net.swisstech.bitly:bitly-api-client:0.7.2'
+    compile "org.scribe:scribe:1.4.3.stackmagic"
+    compile 'org.codehaus.groovy:groovy-all:2.4.7' 
+
+    compile "io.vertx:vertx-auth-jwt:$vertxVersion"
+    compile "io.vertx:vertx-core:$vertxVersion"
+    compile "io.vertx:vertx-redis-client:$vertxVersion"
+    compile "io.vertx:vertx-lang-groovy:$vertxVersion"
+    compile "io.vertx:vertx-mail-client:$vertxVersion"
+    compile "io.vertx:vertx-unit:$vertxVersion"
+    compile "io.vertx:vertx-web:$vertxVersion"
+
+    testCompile 'junit:junit:4.12'
+}
+
+
+processResources {
+    from 'src/main/groovy'
+    from 'src/main/resources'
+}
+
+shadowJar {
+    baseName = 'devsandbox'
+    classifier = 'fat'
+    version = "$appVersion"
+    manifest {
+        attributes 'Main-Class': 'io.vertx.core.Starter'
+        attributes 'Main-Verticle': 'WebServer.groovy'
+    }
+    mergeServiceFiles {
+        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
+    }
+}
+
+
+tasks.withType(GroovyCompile) {
+  groovyClasspath += configurations.ivy
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.0'
+}
+
+run {
+  args = ["run", "sandbox.groovy",
+    "--redeploy=src/**/*.groovy",
+    "--launcher-class=io.vertx.core.Launcher",
+    "--on-redeploy='./gradlew compile'"]
+}
+
