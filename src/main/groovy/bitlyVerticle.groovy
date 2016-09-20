@@ -12,35 +12,19 @@ import groovy.json.JsonSlurper
 def token = "b771dcae4108c72f5027c183c1c6609be99123e7"
 
 String createShortUrl(url) {
-	def token = "b771dcae4108c72f5027c183c1c6609be99123e7"
 	BitlyClient client = new BitlyClient(token)
 	client.shorten()
     	.setLongUrl(url) //
     	.call()?.data.url
 }
 
-def linkStats() {
-
-}
-
-def demo() {
-    def token = "b771dcae4108c72f5027c183c1c6609be99123e7"
-    println "TOKEN: ${token}"
+def linkStats(hash) {
 	BitlyClient client = new BitlyClient(token)
-	def respShort = client.shorten()
-    	.setLongUrl("https://github.com/stackmagic/bitly-api-client") //
-    	.call();
-    println respShort
-    println "-------"
-    println client.linkClicksExpanded()
-    	.setLink('http://bit.ly/2cjg3JI')
-    	.setUnit("minute")
-    	.setUnits(10)//
-    	.call()
-    println "-------"
-    def report = client.userClicksExpanded() //
+    def report = client.linkClicksExpanded() //
+    		.setLink("http://bit.ly/${hash}")
+    		.setUnits(-1)
 			.call();
-	println prettyPrint(toJson(new JsonSlurper().parseText(report.toString())))
+	toJson(new JsonSlurper().parseText(report.toString()))
 }
 
 vertx.eventBus().consumer("bitly.createlink") { message ->
@@ -53,5 +37,10 @@ vertx.eventBus().consumer("bitly.createlink") { message ->
 }
 
 vertx.eventBus().consumer("bitly.linkStats") { message ->
-	message.reply("Not yet implemented :P :P :P")
+	def shortUrl = "http://bit.ly/${message.body().hash}"
+	vertx.executeBlocking({ future ->
+		future.complete(linkStats())
+	}, { res ->
+		message.reply(res.result())
+	})
 }

@@ -1,6 +1,5 @@
 import io.vertx.groovy.core.Vertx
 
-def vertx = Vertx.vertx()
 
 vertx.deployVerticle("groovy:webserver.groovy")
 vertx.deployVerticle("groovy:bitlyVerticle.groovy")
