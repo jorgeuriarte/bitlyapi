@@ -2,7 +2,7 @@ import io.vertx.groovy.core.Vertx
 
 
 vertx.deployVerticle("groovy:webserver.groovy")
-vertx.deployVerticle("groovy:bitlyVerticle.groovy")
+vertx.deployVerticle("groovy:bitlyapi/bitlyVerticle.groovy")
 
 println """
 
